@@ -1,0 +1,118 @@
+# GestureOS gesture definitions and runtime configuration
+
+camera:
+  detection_confidence: 0.6
+  tracking_confidence: 0.65
+  model_complexity: 0
+  width: 960
+  height: 540
+  fps: 60
+  flip_horizontal: true
+  distance_calibration: 9.5
+  min_distance_cm: 25
+  max_distance_cm: 170
+  ideal_distance_cm: 65
+
+sensitivity:
+  cursor_speed: 1.15
+  smoothing: true
+  smoothing_factor: 4
+  deadzone_px: 2
+  edge_margin: 0.07
+  adaptive_smoothing: true
+
+debug:
+  show_landmarks: false
+
+gestures:
+  pointer:
+    fingers: [0, 1, 0, 0, 0]
+    action: {target: mouse, operation: move_cursor}
+
+  left_click:
+    fingers: [1, 1, 0, 0, 0]
+    action: {target: mouse, operation: left_click}
+
+  right_click:
+    fingers: [1, 0, 1, 0, 0]
+    action: {target: mouse, operation: right_click}
+
+  double_click:
+    fingers: [1, 1, 0, 0, 0]
+    repeat: 2
+    action: {target: mouse, operation: double_click}
+
+  middle_click:
+    fingers: [1, 1, 1, 0, 0]
+    action: {target: mouse, operation: middle_click}
+
+  scroll_up:
+    fingers: [0, 1, 1, 1, 1]
+    direction: up
+    action: {target: mouse, operation: scroll, amount: 3}
+
+  scroll_down:
+    fingers: [0, 1, 1, 1, 1]
+    direction: down
+    action: {target: mouse, operation: scroll, amount: -3}
+
+  drag_hold:
+    fingers: [0, 0, 0, 0, 0]
+    action: {target: mouse, operation: drag_hold}
+
+  pinch_and_hold:
+    fingers: [1, 1, 0, 0, 0]
+    hold: true
+    action: {target: mouse, operation: drag_hold}
+
+  zoom_in:
+    gesture_type: two_finger_spread
+    action: {target: mouse, operation: zoom_in}
+
+  zoom_out:
+    gesture_type: two_finger_pinch
+    action: {target: mouse, operation: zoom_out}
+
+  stop_cursor:
+    fingers: [1, 1, 1, 1, 1]
+    action: {target: mouse, operation: stop_cursor}
+
+  capture_screenshot:
+    gesture_type: camera_sign
+    action: {target: system, operation: capture_screenshot}
+
+  task_view:
+    fingers: [0, 1, 1, 1, 1]
+    action: {target: system, operation: task_view}
+
+  show_desktop:
+    gesture_type: open_both_palms
+    action: {target: system, operation: show_desktop}
+
+  volume_up:
+    gesture_type: thumbs_up
+    action: {target: system, operation: volume_up}
+
+  volume_down:
+    gesture_type: thumbs_down
+    action: {target: system, operation: volume_down}
+
+  play_pause:
+    gesture_type: peace_sign
+    action: {target: system, operation: play_pause}
+
+  browser_back:
+    gesture_type: swipe_left
+    action: {target: system, operation: browser_previous}
+
+  browser_forward:
+    gesture_type: swipe_right
+    action: {target: system, operation: browser_next}
+
+  new_tab:
+    gesture_type: victory_sign
+    action: {target: system, operation: open_new_tab}
+
+  close_tab:
+    gesture_type: cross_fingers
+    action: {target: system, operation: close_tab}
