@@ -1,5 +1,5 @@
 """Lock screen helper."""
 
-class LockScreen:
-    def lock(self):
-        pass
+from utils.system_stubs import LockScreen
+
+__all__ = ["LockScreen"]

@@ -1,8 +1,5 @@
 """Volume control utilities."""
 
-class VolumeControl:
-    def increase(self):
-        pass
+from utils.system_stubs import VolumeControl
 
-    def decrease(self):
-        pass
+__all__ = ["VolumeControl"]

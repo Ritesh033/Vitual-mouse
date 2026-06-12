@@ -1,8 +1,5 @@
 """Brightness control utilities."""
 
-class BrightnessControl:
-    def increase(self):
-        pass
+from utils.system_stubs import BrightnessControl
 
-    def decrease(self):
-        pass
+__all__ = ["BrightnessControl"]
