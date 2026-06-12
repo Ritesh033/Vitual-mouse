@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import logging
 import subprocess
 import webbrowser
-
-logger = logging.getLogger(__name__)
 
 
 class AppLauncher:
@@ -16,7 +13,7 @@ class AppLauncher:
         "calculator": ["calc"],
     }
 
-    def launch(self, app_name):
+    def launch(self, app_name: str) -> bool:
         if not app_name:
             return False
 
@@ -32,9 +29,5 @@ class AppLauncher:
         try:
             subprocess.Popen(command, close_fds=True, shell=False)
             return True
-        except FileNotFoundError:
-            logger.warning("Executable not found for '%s': %s", normalized, command)
-            return False
-        except Exception as exc:
-            logger.error("Failed to launch '%s': %s", normalized, exc)
+        except Exception:
             return False

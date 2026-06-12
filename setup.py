@@ -15,7 +15,7 @@ setup(
         "torch>=2.1.1",
         "torchaudio>=2.1.1",
         "PyYAML>=6.0.1",
-        "Pillow>=10.1.0",
+        "Pillow>=10.4.0",
         "SpeechRecognition>=3.10.0",
         "pyttsx3>=2.90",
     ],
