@@ -1,3 +1,4 @@
+import logging
 import time
 
 import cv2
@@ -16,6 +17,8 @@ from personalization.adaptive_learning import AdaptiveLearning
 from personalization.user_profiles import UserProfiles
 from system_control.system_controller import SystemController
 from vision.hand_detector import HandDetector
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_USER_ID = "default_user"
 
@@ -130,19 +133,31 @@ def apply_decision(decision, hands, controllers, router, active, mode, freeze_cu
         if operation == "drag_hold":
             controllers["mouse"].start_drag()
             return active, mode, False, "Dragging"
-        router.execute(action, controllers)
+        try:
+            router.execute(action, controllers)
+        except Exception as exc:
+            logger.error("Router failed to execute mouse action %s: %s", operation, exc)
+            return active, mode, freeze_cursor, f"Mouse action failed: {operation}"
         return active, mode, False, info_text
 
     if target == "keyboard":
         if not active:
             return active, mode, freeze_cursor, "Keyboard intent ignored while sleeping"
-        router.execute(action, controllers)
+        try:
+            router.execute(action, controllers)
+        except Exception as exc:
+            logger.error("Router failed to execute keyboard action %s: %s", operation, exc)
+            return active, mode, freeze_cursor, f"Keyboard action failed: {operation}"
         return active, mode, freeze_cursor, info_text
 
     if target == "system":
         if not active:
             return active, mode, freeze_cursor, "System intent ignored while sleeping"
-        result = router.execute(action, controllers)
+        try:
+            result = router.execute(action, controllers)
+        except Exception as exc:
+            logger.error("Router failed to execute system action %s: %s", operation, exc)
+            return active, mode, freeze_cursor, f"System action failed: {operation}"
         if operation == "capture_screenshot" and result:
             return active, mode, freeze_cursor, f"Screenshot saved: {result}"
         if operation == "launch_application":
@@ -197,7 +212,11 @@ def main():
     max_distance_cm = camera_settings.get("max_distance_cm", 170)
     ideal_distance_cm = camera_settings.get("ideal_distance_cm", 65)
 
-    capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    cam_index = camera_settings.get("index", 0)
+    capture = cv2.VideoCapture(cam_index, cv2.CAP_DSHOW)
+    if not capture.isOpened():
+        logger.warning("CAP_DSHOW backend failed for camera %d, retrying with default backend", cam_index)
+        capture = cv2.VideoCapture(cam_index)
     if not capture.isOpened():
         raise RuntimeError("Cannot open webcam. Check camera permissions and try again.")
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, camera_settings.get("width", 960))
@@ -230,6 +249,7 @@ def main():
 
             success, frame = capture.read()
             if not success:
+                logger.error("Failed to read frame from camera — ending capture loop")
                 break
 
             if camera_settings.get("flip_horizontal", True):
@@ -381,15 +401,20 @@ def main():
                     info_text = f"Rejected {humanize(assistant.last_decision.intent)}"
 
     except KeyboardInterrupt:
-        print("Gesture tracking stopped.")
+        logger.info("Gesture tracking stopped by user.")
+    except Exception as exc:
+        logger.critical("Unexpected error in main loop: %s", exc, exc_info=True)
     finally:
         capture.release()
         cv2.destroyAllWindows()
 
-    session_duration = max(1, int(time.time() - session_started))
-    accuracy = 1.0 if executed_actions == 0 else max(0.0, (executed_actions - rejected_actions) / executed_actions)
-    metrics.record_session(session_duration, round(accuracy, 3))
-    metrics.save()
+        session_duration = max(1, int(time.time() - session_started))
+        accuracy = 1.0 if executed_actions == 0 else max(0.0, (executed_actions - rejected_actions) / executed_actions)
+        metrics.record_session(session_duration, round(accuracy, 3))
+        try:
+            metrics.save()
+        except Exception as exc:
+            logger.error("Failed to save session metrics: %s", exc)
 
 
 if __name__ == "__main__":
