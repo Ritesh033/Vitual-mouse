@@ -168,6 +168,22 @@ def apply_decision(decision, hands, controllers, router, active, mode, freeze_cu
     return active, mode, freeze_cursor, info_text
 
 
+def execute_decision(decision, hands, controllers, router, active, mode,
+                     freeze_cursor, metrics):
+    """Apply a decision and record bookkeeping metrics.
+
+    Consolidates the duplicated apply → humanize → record_gesture sequence
+    that was repeated for both gesture and voice code-paths.
+    """
+    active, mode, freeze_cursor, info_text = apply_decision(
+        decision, hands, controllers, router, active, mode, freeze_cursor,
+    )
+    last_action = humanize(decision.intent)
+    if decision.intent not in {"move_cursor", "drag_hold"}:
+        metrics.record_gesture(decision.intent, decision.confidence)
+    return active, mode, freeze_cursor, info_text, last_action
+
+
 def build_cursor_controller(config):
     sensitivity = config.data.get("sensitivity", {})
     cursor_speed = sensitivity.get("cursor_speed", 1.15)
@@ -325,19 +341,11 @@ def main():
                 if decision.intent == "move_cursor" and pointer_tracking:
                     last_action = humanize(decision.intent)
                 else:
-                    active, mode, freeze_cursor, info_text = apply_decision(
-                        decision,
-                        hands,
-                        controllers,
-                        router,
-                        active,
-                        mode,
-                        freeze_cursor,
+                    active, mode, freeze_cursor, info_text, last_action = execute_decision(
+                        decision, hands, controllers, router,
+                        active, mode, freeze_cursor, metrics,
                     )
-                    last_action = humanize(decision.intent)
                     executed_actions += 1
-                    if decision.intent not in {"move_cursor", "drag_hold"}:
-                        metrics.record_gesture(decision.intent, decision.confidence)
             elif decision.status == "awaiting_confirmation":
                 info_text = f"Confirm {humanize(decision.intent)}"
                 last_action = humanize(decision.intent)
@@ -382,18 +390,11 @@ def main():
                         context={"mode": mode, "active": active},
                     )
                     if voice_decision.should_execute:
-                        active, mode, freeze_cursor, info_text = apply_decision(
-                            voice_decision,
-                            hands,
-                            controllers,
-                            router,
-                            active,
-                            mode,
-                            freeze_cursor,
+                        active, mode, freeze_cursor, info_text, last_action = execute_decision(
+                            voice_decision, hands, controllers, router,
+                            active, mode, freeze_cursor, metrics,
                         )
-                        last_action = humanize(voice_decision.intent)
                         executed_actions += 1
-                        metrics.record_gesture(voice_decision.intent, voice_decision.confidence)
             if key == ord("u") and assistant.last_decision:
                 if assistant.handle_feedback(False, user_id=DEFAULT_USER_ID):
                     rejected_actions += 1

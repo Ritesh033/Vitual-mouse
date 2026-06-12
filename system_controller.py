@@ -2,12 +2,13 @@ import datetime
 import logging
 import os
 
-import keyboard
 import pyautogui
 
 from smart_home.smart_home_controller import SmartHomeController
 from system_control.app_launcher import AppLauncher
 from system_control.window_manager import WindowManager
+from utils.input_helpers import send_key, send_hotkey, press_key, hotkey
+from utils.smart_home_helpers import toggle_device_state, adjust_thermostat
 
 logger = logging.getLogger(__name__)
 
@@ -48,87 +49,55 @@ class SystemController:
         return self.app_launcher.launch(app_name)
 
     def open_start_menu(self):
-        try:
-            keyboard.press_and_release("windows")
-        except Exception as exc:
-            logger.debug("keyboard module failed for open_start_menu, falling back to pyautogui: %s", exc)
-            pyautogui.press("win")
+        send_hotkey("windows", "win")
 
     def task_view(self):
-        try:
-            keyboard.press_and_release("windows+tab")
-        except Exception as exc:
-            logger.debug("keyboard module failed for task_view, falling back to pyautogui: %s", exc)
-            pyautogui.hotkey("win", "tab")
+        send_hotkey("windows+tab", "win", "tab")
 
     def volume_up(self):
-        try:
-            keyboard.send("volume up")
-        except Exception as exc:
-            logger.debug("keyboard module failed for volume_up, falling back to pyautogui: %s", exc)
-            pyautogui.press("volumeup")
+        send_key("volume up", "volumeup")
 
     def volume_down(self):
-        try:
-            keyboard.send("volume down")
-        except Exception as exc:
-            logger.debug("keyboard module failed for volume_down, falling back to pyautogui: %s", exc)
-            pyautogui.press("volumedown")
+        send_key("volume down", "volumedown")
 
     def mute(self):
-        try:
-            keyboard.send("volume mute")
-        except Exception as exc:
-            logger.debug("keyboard module failed for mute, falling back to pyautogui: %s", exc)
-            pyautogui.press("volumemute")
+        send_key("volume mute", "volumemute")
 
     def open_new_tab(self):
-        pyautogui.hotkey("ctrl", "t")
+        hotkey("ctrl", "t")
 
     def close_tab(self):
-        pyautogui.hotkey("ctrl", "w")
+        hotkey("ctrl", "w")
 
     def reload_page(self):
-        pyautogui.hotkey("ctrl", "r")
+        hotkey("ctrl", "r")
 
     def browser_next(self):
-        pyautogui.hotkey("alt", "right")
+        hotkey("alt", "right")
 
     def browser_previous(self):
-        pyautogui.hotkey("alt", "left")
+        hotkey("alt", "left")
 
     def play_pause(self):
-        try:
-            keyboard.send("play/pause media")
-        except Exception as exc:
-            logger.debug("keyboard module failed for play_pause, falling back to pyautogui: %s", exc)
-            pyautogui.press("playpause")
+        send_key("play/pause media", "playpause")
 
     def next_track(self):
-        try:
-            keyboard.send("next track")
-        except Exception as exc:
-            logger.debug("keyboard module failed for next_track, falling back to pyautogui: %s", exc)
-            pyautogui.press("nexttrack")
+        send_key("next track", "nexttrack")
 
     def previous_track(self):
-        try:
-            keyboard.send("previous track")
-        except Exception as exc:
-            logger.debug("keyboard module failed for previous_track, falling back to pyautogui: %s", exc)
-            pyautogui.press("prevtrack")
+        send_key("previous track", "prevtrack")
 
     def fast_forward(self):
-        pyautogui.press("right")
+        press_key("right")
 
     def rewind(self):
-        pyautogui.press("left")
+        press_key("left")
 
     def next_slide(self):
-        pyautogui.press("right")
+        press_key("right")
 
     def previous_slide(self):
-        pyautogui.press("left")
+        press_key("left")
 
     def toggle_home_mode(self):
         return self.smart_home.toggle_home_mode()
@@ -140,27 +109,14 @@ class SystemController:
         return self.smart_home.set_lights("all", "off")
 
     def smart_home_lights_room(self, room="living_room"):
-        current = self.smart_home.get_device_state(f"lights_{room}") or {}
-        next_state = "off" if current.get("state") == "on" else "on"
+        _, next_state = toggle_device_state(self.smart_home, f"lights_{room}")
         return self.smart_home.set_lights(room, next_state)
 
     def smart_home_thermostat_up(self):
-        current = self.smart_home.get_device_state("thermostat") or {}
-        try:
-            temperature = float(current.get("temperature", 20)) + 1
-        except (ValueError, TypeError) as exc:
-            logger.warning("Invalid thermostat temperature value, defaulting to 21: %s", exc)
-            temperature = 21
-        return self.smart_home.set_thermostat(temperature)
+        return adjust_thermostat(self.smart_home, +1)
 
     def smart_home_thermostat_down(self):
-        current = self.smart_home.get_device_state("thermostat") or {}
-        try:
-            temperature = float(current.get("temperature", 20)) - 1
-        except (ValueError, TypeError) as exc:
-            logger.warning("Invalid thermostat temperature value, defaulting to 19: %s", exc)
-            temperature = 19
-        return self.smart_home.set_thermostat(temperature)
+        return adjust_thermostat(self.smart_home, -1)
 
     def smart_home_door_toggle(self):
         return self.smart_home.toggle_door_lock("front")
@@ -169,11 +125,9 @@ class SystemController:
         return self.smart_home.activate_scene(scene)
 
     def smart_home_tv(self):
-        current = self.smart_home.get_device_state("tv") or {}
-        action = "off" if current.get("state") == "on" else "on"
+        _, action = toggle_device_state(self.smart_home, "tv")
         return self.smart_home.control_tv(action)
 
     def smart_home_appliance(self, device="coffee_maker"):
-        current = self.smart_home.get_device_state(device) or {}
-        state = "off" if current.get("state") == "on" else "on"
+        _, state = toggle_device_state(self.smart_home, device)
         return self.smart_home._send_command(device, {"state": state})

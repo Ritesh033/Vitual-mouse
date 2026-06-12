@@ -1,20 +1,20 @@
 """Window management utilities."""
 
-import pyautogui
+from utils.input_helpers import hotkey
 
 
 class WindowManager:
     def tile_left(self):
-        pyautogui.hotkey("win", "left")
+        hotkey("win", "left")
 
     def tile_right(self):
-        pyautogui.hotkey("win", "right")
+        hotkey("win", "right")
 
     def maximize(self):
-        pyautogui.hotkey("win", "up")
+        hotkey("win", "up")
 
     def minimize(self):
-        pyautogui.hotkey("win", "down")
+        hotkey("win", "down")
 
     def close_active(self):
-        pyautogui.hotkey("alt", "f4")
+        hotkey("alt", "f4")

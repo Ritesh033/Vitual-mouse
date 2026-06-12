@@ -1,8 +1,5 @@
 """Shutdown and restart utilities."""
 
-class Shutdown:
-    def shutdown(self):
-        pass
+from utils.system_stubs import Shutdown
 
-    def restart(self):
-        pass
+__all__ = ["Shutdown"]
