@@ -27,7 +27,7 @@ class AppLauncher:
             return False
 
         try:
-            subprocess.Popen(command)
+            subprocess.Popen(command, close_fds=True, shell=False)
             return True
         except Exception:
             return False

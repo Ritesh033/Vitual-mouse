@@ -1,12 +1,15 @@
 import datetime
 import os
+import subprocess
+import sys
+
 import pyautogui
 import keyboard
 from smart_home.smart_home_controller import SmartHomeController
 from system_control.app_launcher import AppLauncher
 from system_control.window_manager import WindowManager
 
-pyautogui.FAILSAFE = False
+pyautogui.FAILSAFE = True
 pyautogui.PAUSE = 0
 
 
@@ -25,7 +28,13 @@ class SystemController:
         return path
 
     def lock_screen(self):
-        os.system("rundll32.exe user32.dll,LockWorkStation")
+        if sys.platform == "win32":
+            subprocess.run(
+                ["rundll32.exe", "user32.dll,LockWorkStation"],
+                check=False,
+            )
+        else:
+            subprocess.run(["loginctl", "lock-session"], check=False)
 
     def close_window(self):
         self.window_manager.close_active()
